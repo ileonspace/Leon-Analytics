@@ -13,6 +13,7 @@
 
 ## 目录
 
+- [📂 项目结构](#-项目结构)
 - [✨ 功能特性](#-功能特性)
 - [🛠️ 技术栈](#-技术栈)
 - [🚀 部署指南](#-部署指南)
@@ -23,19 +24,41 @@
 
 ---
 
+## 📂 项目结构
+
+本项目保持了极简的文件结构，便于维护和部署。
+
+```text
+leon-analytics/
+├── src/
+│   └── index.js       # 核心代码：包含后端逻辑与前端 Dashboard UI (单文件全栈)
+├── schema.sql         # 数据库：D1 数据库表结构初始化脚本
+├── wrangler.toml      # 配置：Cloudflare Workers 项目配置文件
+├── package.json       # 依赖：Node.js 项目描述与脚本
+├── .gitignore         # Git：指定忽略上传的文件
+└── README.md          # 文档：项目说明书
+
+```
+
+---
+
 ## ✨ 功能特性
 
 * **🌍 全球即时统计**：利用 Cloudflare 边缘节点，毫秒级记录访问数据。
 * **💾 D1 数据库驱动**：使用标准的 SQL 数据库，查询灵活，成本低廉。
 * **🖥️ 单文件全栈**：后端逻辑与前端 Dashboard UI 全部集成在一个 `index.js` 文件中。
 * **🎨 精美 Dashboard**：
-    * 支持 **暗黑/明亮模式** 自动切换。
-    * **多语言支持** (中文/English)。
-    * **交互式地图** (World Map Visualization)。
-    * 实时数据流与访问来源分析。
+* 支持 **暗黑/明亮模式** 自动切换。
+* **多语言支持** (中文/English)。
+* **交互式地图** (World Map Visualization)。
+* 实时数据流与访问来源分析。
+
+
 * **🔒 安全隐私**：
-    * 简单的密码鉴权机制。
-    * 不通过 Cookie 追踪个人隐私，仅记录 IP、地区、路径等基础信息。
+* 简单的密码鉴权机制。
+* 不通过 Cookie 追踪个人隐私，仅记录 IP、地区、路径等基础信息。
+
+
 * **📦 多站点支持**：同一个部署实例可同时统计多个网站 (`site_id`)。
 
 ---
@@ -45,7 +68,7 @@
 本项目采用极简的 Serverless 架构，追求高性能与低维护成本。
 
 | 组件 | 技术选型 | 说明 |
-| :--- | :--- | :--- |
+| --- | --- | --- |
 | **Runtime** | Cloudflare Workers | 基于 V8 Isolate 引擎，非 Node.js |
 | **Database** | Cloudflare D1 | Serverless SQLite 数据库 |
 | **Frontend** | HTML5 + Tailwind CSS | 通过 CDN 加载，无构建步骤 |
@@ -216,4 +239,3 @@ fetch('[https://你的-worker-域名.workers.dev/api/track](https://你的-worke
 本项目基于 [MIT License](https://www.google.com/search?q=LICENSE) 开源。
 
 Copyright (c) 2024 Leon Analytics
-
