@@ -1,0 +1,10 @@
+name = "leon-analytics"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# D1 数据库绑定配置
+# 请先运行 'npx wrangler d1 create tj-db' 获取您的 database_id
+[[d1_databases]]
+binding = "DB"  # 代码中通过 env.DB 访问，请勿修改此名称
+database_name = "tj-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" # <--- 请在此处填入您的真实 Database ID
