@@ -66,3 +66,154 @@
 ```bash
 npm install -g wrangler
 wrangler login
+
+```
+
+### 2. 初始化项目
+
+```bash
+mkdir leon-analytics
+cd leon-analytics
+npm init cloudflare@latest . 
+# 初始化时选择 "Hello World" Worker 模板
+
+```
+
+### 3. 创建数据库
+
+创建一个名为 `tj-db` 的 D1 数据库：
+
+```bash
+wrangler d1 create tj-db
+
+```
+
+> ⚠️ **注意**：命令执行成功后，请复制控制台输出的 `[[d1_databases]]` 配置块，稍后需要填入 `wrangler.toml`。
+
+### 4. 初始化表结构
+
+在项目根目录创建 `schema.sql`，内容如下：
+
+```sql
+DROP TABLE IF EXISTS visits;
+CREATE TABLE IF NOT EXISTS visits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id TEXT DEFAULT 'default',
+    ip TEXT,
+    country TEXT,
+    path TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_site_id ON visits(site_id);
+CREATE INDEX IF NOT EXISTS idx_timestamp ON visits(timestamp);
+CREATE INDEX IF NOT EXISTS idx_country ON visits(country);
+
+```
+
+执行初始化命令：
+
+```bash
+npx wrangler d1 execute tj-db --remote --file=./schema.sql
+
+```
+
+### 5. 修改配置 (wrangler.toml)
+
+编辑 `wrangler.toml` 文件：
+
+```toml
+name = "leon-analytics"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# 替换为第3步获取的数据库 ID
+[[d1_databases]]
+binding = "DB"
+database_name = "tj-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+```
+
+### 6. 部署上线
+
+1. **覆盖代码**：将本项目提供的 `index.js` 内容复制到你的 `src/index.js`。
+2. **设置密码**：
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+# 输入你的管理后台密码
+
+```
+
+
+3. **发布**：
+```bash
+npx wrangler deploy
+
+```
+
+
+
+---
+
+## ⚙️ 配置说明
+
+### 环境变量 (Secrets)
+
+| 变量名 | 必填 | 说明 |
+| --- | --- | --- |
+| `ADMIN_PASSWORD` | ✅ 是 | 访问 Dashboard 的唯一凭证。请通过 `wrangler secret put` 设置。 |
+
+### 数据库绑定
+
+| Binding 名称 | 说明 |
+| --- | --- |
+| `DB` | **不可修改**。代码逻辑通过 `env.DB` 访问数据库。 |
+
+---
+
+## 💻 接入指南
+
+将以下代码添加到你网站 HTML 的 `</body>` 标签之前即可开始统计。
+
+```html
+<script>
+fetch('[https://你的-worker-域名.workers.dev/api/track](https://你的-worker-域名.workers.dev/api/track)', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    site_id: 'my-blog',  // 你的站点标识
+    path: window.location.pathname
+  })
+}).catch(e => console.error('Analytics init failed', e));
+</script>
+
+```
+
+---
+
+## 📊 API 文档
+
+### 1. 上报数据
+
+* **Endpoint**: `POST /api/track`
+* **Content-Type**: `application/json`
+
+| 参数 | 类型 | 说明 | 示例 |
+| --- | --- | --- | --- |
+| `site_id` | `string` | (可选) 站点标识，默认为 `default` | `"blog"` |
+| `path` | `string` | (可选) 访问路径，默认为 `/` | `"/article/1"` |
+
+### 2. 获取统计数据
+
+* **Endpoint**: `GET /api/stats`
+* **Headers**: `Authorization: <ADMIN_PASSWORD>`
+* **Query Params**: `?site_id=all` 或 `?site_id=your-site-id`
+
+---
+
+## 📝 License
+
+本项目基于 [MIT License](https://www.google.com/search?q=LICENSE) 开源。
+
+Copyright (c) 2024 Leon Analytics
+
