@@ -2,7 +2,7 @@
  * Leon Analytics
  * A lightweight, privacy-friendly website traffic analytics system.
  * Built on Cloudflare Workers + D1 Database.
- * * License: MIT
+ * License: MIT
  */
 
 const BLOCKED_SITE_IDS = ["broadcast"]; // 屏蔽的站点ID列表
@@ -126,7 +126,7 @@ const htmlDashboard = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Leon Analytics</title>
+    <title>Leon Stats</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsvectormap/1.5.3/css/jsvectormap.min.css" />
@@ -307,7 +307,7 @@ const htmlDashboard = `
                 <div class="w-px h-3 md:h-4 bg-slate-200 dark:bg-white/10 mx-0.5 md:mx-1"></div>
 
                 <button onclick="toggleLang()" class="h-7 md:h-8 px-2 md:px-3 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 transition-all font-sans" id="lang-btn">EN</button>
-                <button onclick="refreshData()" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full hover:bg-indigo-5 dark:hover:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 transition-all group" title="Refresh"><svg id="refresh-icon" class="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-180 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
+                <button onclick="refreshData()" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 transition-all group" title="Refresh"><svg id="refresh-icon" class="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-180 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
                 <button onclick="logout()" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all" title="Logout"><svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             </div>
             
@@ -716,30 +716,54 @@ fetch('\${origin}/api/track', {
             }
         }
 
+        // 修复: 这里的逻辑已更新，同时处理桌面端和移动端下拉菜单
         function updateSiteOptions(sites) {
-            const select = document.getElementById('site-select-desktop');
-            if (select.options.length - 1 !== sites.length) {
-                const currentVal = select.value;
-                select.innerHTML = ''; 
-                const allOpt = document.createElement('option');
-                allOpt.value = 'all';
-                allOpt.innerText = curLang === 'en' ? 'ALL SITES' : '所有站点';
-                select.appendChild(allOpt);
-                sites.forEach(site => {
-                    if(!site) return;
-                    const opt = document.createElement('option');
-                    opt.value = site;
-                    opt.innerText = site;
-                    select.appendChild(opt);
-                });
-                if (currentVal === 'all' || sites.includes(currentVal)) select.value = currentVal;
-                else select.value = 'all';
-            }
+            // 定义需要更新的两个下拉框ID
+            const selectorIds = ['site-select-desktop', 'site-select-mobile'];
+            
+            selectorIds.forEach(id => {
+                const select = document.getElementById(id);
+                if (!select) return;
+
+                // 简单的优化：如果选项数量没变，就不重绘（假设站点列表不频繁变动）
+                // 注意：这里用 length - 1 是因为默认有一个 'all' 选项
+                if (select.options.length - 1 !== sites.length) {
+                    const currentVal = currentSiteId; // 使用全局变量 currentSiteId 保持状态
+                    select.innerHTML = ''; 
+                    
+                    const allOpt = document.createElement('option');
+                    allOpt.value = 'all';
+                    allOpt.innerText = curLang === 'en' ? 'ALL SITES' : '所有站点';
+                    select.appendChild(allOpt);
+                    
+                    sites.forEach(site => {
+                        if(!site) return;
+                        const opt = document.createElement('option');
+                        opt.value = site;
+                        opt.innerText = site;
+                        select.appendChild(opt);
+                    });
+                    
+                    // 恢复选中状态
+                    if (currentVal === 'all' || sites.includes(currentVal)) {
+                        select.value = currentVal;
+                    } else {
+                        select.value = 'all';
+                    }
+                }
+            });
         }
         
         function updateSiteSelectUI() {
-             const desktopSel = document.getElementById('site-select-desktop');
-             if(desktopSel.options.length > 0) desktopSel.options[0].text = curLang === 'en' ? 'ALL SITES' : '所有站点';
+             // 同时更新两个下拉框的语言文本
+             const ids = ['site-select-desktop', 'site-select-mobile'];
+             ids.forEach(id => {
+                 const sel = document.getElementById(id);
+                 if(sel && sel.options.length > 0) {
+                     sel.options[0].text = curLang === 'en' ? 'ALL SITES' : '所有站点';
+                 }
+             });
+             
              if(currentSiteId === 'all') document.getElementById('current-site-badge').innerText = curLang === 'en' ? 'ALL' : '全部';
         }
 
